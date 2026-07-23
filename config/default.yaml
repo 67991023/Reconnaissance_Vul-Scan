@@ -1,0 +1,45 @@
+concurrency:
+  max_concurrent_plugins: 8
+  scan_timeout_seconds: 600
+
+triggers:
+  - match:
+      port: 80
+      service: "http|http-proxy"
+    plugins: ["http_plugin"]
+
+  - match:
+      port: 443
+      service: "https|ssl/http"
+    plugins: ["http_plugin"]
+    extra_args:
+      scheme: "https"
+
+  - match:
+      port: 445
+      service: "microsoft-ds|netbios-ssn"
+    plugins: ["smb_plugin"]
+
+  - match:
+      port: 21
+      service: "ftp"
+    plugins: ["ftp_plugin"]
+
+  - match:
+      port: 22
+      service: "ssh"
+    plugins: ["ssh_plugin"]
+
+  - match:
+      port: 53
+      service: "domain"
+    plugins: ["dns_plugin"]
+
+  - match:
+      port: [139, 445]
+      service: "netbios"
+    plugins: ["smb_plugin"]
+
+fallback:
+  # port ที่ไม่ match rule ไหนเลย → เก็บ banner ไว้เฉยๆ ไม่ trigger plugin
+  action: "banner_grab_only"
