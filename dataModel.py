@@ -13,3 +13,10 @@ class Service: # ข้อมูล service ที่เจอบน 1 port เ�
     def full_banner(self) -> str: # รวม field ทั้งหมดเป็น string เดียว
         parts = [self.product, self.version, self.extra_info]
         return " ".join(p for p in parts if p == True) or self.name
+
+@dataclass
+class Port: # แทนข้อมูล 1 port ที่เปิดอยู่บน target
+    number: int
+    protocol: str = "tcp"
+    state: str = "open"
+    service: Service | None = None # port จะมี service หรือไม่ ถ้ามีจะเก็บข้อมูล service ไว้ใน object Service
