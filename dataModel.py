@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-
+# เเยก service จาก port เพราะ port อาจจะมี service หรือไม่ก็ได้ และ service ก็อาจจะมีข้อมูลหลาย field
 @dataclass
 class Service: # ข้อมูล service ที่เจอบน 1 port เช่น http, ssh, smb
     name: str                  # http
@@ -14,12 +14,14 @@ class Service: # ข้อมูล service ที่เจอบน 1 port เ�
         parts = [self.product, self.version, self.extra_info]
         return " ".join(p for p in parts if p == True) or self.name
 
+
 @dataclass
 class Port: # แทนข้อมูล 1 port ที่เปิดอยู่บน target
     number: int
     protocol: str = "tcp"
     state: str = "open"
     service: Service | None = None # port จะมี service ไหม ถ้ามีจะเก็บข้อมูล service ไว้ใน object Service
+
 
 @dataclass
 class Target:
@@ -34,3 +36,19 @@ class Target:
             if p.number == number:
                 return p
         return None
+
+
+@dataclass
+class Finding:
+    # ผลลัพธ์ที่น่าสนใจจาก plugin
+    severity: str    # "info" | "notable" | "critical"
+    title: str
+    detail: str = ""
+
+@dataclass
+class PluginResult: # ผลลัพธ์การรันของ 1 plugin
+    plugin_name: str
+    port: int
+    success: bool
+    findings: list[Finding] = field(default_factory=list)
+    output_files: list[Path] = field(default_factory=list)
