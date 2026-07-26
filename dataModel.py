@@ -19,4 +19,18 @@ class Port: # แทนข้อมูล 1 port ที่เปิดอยู�
     number: int
     protocol: str = "tcp"
     state: str = "open"
-    service: Service | None = None # port จะมี service หรือไม่ ถ้ามีจะเก็บข้อมูล service ไว้ใน object Service
+    service: Service | None = None # port จะมี service ไหม ถ้ามีจะเก็บข้อมูล service ไว้ใน object Service
+
+@dataclass
+class Target:
+    # แทนเครื่องดียวที่กำลัง scan อยู่ พร้อมทุก port ที่เจอ
+    host: str
+    ports: list[Port] = field(default_factory=list) # default_factory ใช้สร้าง list ใหม่ทุกครั้งที่สร้าง Target object
+    scan_started: datetime = field(default_factory=datetime.now)
+
+    def get_port(self, number: int) -> Port | None: # คืนค่า Port object ที่ตรงกับเลข port ที่ส่งเข้ามา ถ้าไม่เจอจะคืนค่า None
+        # หา Port object จากเลข port
+        for p in self.ports:
+            if p.number == number:
+                return p
+        return None
