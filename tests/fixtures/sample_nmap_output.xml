@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<nmaprun>
+  <host>
+    <status state="up"/>
+    <address addr="10.10.10.99" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open"/>
+        <service name="ssh" product="OpenSSH" version="8.2p1" extrainfo="Ubuntu Linux"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open"/>
+        <service name="http" product="Apache httpd" version="2.4.41" extrainfo="(Ubuntu)"/>
+      </port>
+      <port protocol="tcp" portid="139">
+        <state state="closed"/>
+        <service name="netbios-ssn"/>
+      </port>
+    </ports>
+  </host>
+</nmaprun>
