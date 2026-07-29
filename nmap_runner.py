@@ -1,14 +1,12 @@
-import nmap
+import subprocess
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
-scanner = nmap.PortScanner()
+from dataModel import Target, Port, Service
 
-scanner.scan('127.0.0.1', '22-443')
-
-for host in scanner.all_hosts():
-    print(f"Host: {host} ({scanner[host].hostname()})")
-    print(f"State: {scanner[host].state()}")
-    for proto in scanner[host].all_protocols():
-        print(f"Protocol: {proto}")
-        ports = scanner[host][proto].keys()
-        for port in ports:
-            print(f"Port: {port} \t State: {scanner[host][proto][port]['state']}")
+result = subprocess.run(
+    ["nmap", "-sV", "-p", ports, "-oX", "-", target_host], # คำสั่ง nmap ที่จะรัน เป็น string เพื่อกัน shell injection
+    capture_output=True, # เก็บ stdout ไว้ใน result.stdout
+    text=True,
+    timeout=300,
+)
