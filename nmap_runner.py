@@ -63,3 +63,7 @@ def parse_nmap_xml(xml_output: str) -> Target:
         target.ports.append(Port(number=port_number, protocol=protocol, state=state, service=service))
 
     return target
+
+def scan_target(target_host: str, ports: str, timeout: int = 300) -> Target:
+    xml_output = run_nmap_scan(target_host, ports=ports, timeout=timeout)
+    return parse_nmap_xml(xml_output)
