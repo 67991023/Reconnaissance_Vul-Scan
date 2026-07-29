@@ -30,7 +30,7 @@ def run_nmap_scan(target_host: str, ports: str, timeout: int = 300) -> str:
 
 
 def parse_nmap_xml(xml_output: str) -> Target:
-    root = ET.fromstring(xml_output)
+    root = ET.fromstring(xml_output) # change fromstring to parse the XML string into an ElementTree object to make python understand 
     host_element = root.find("host")
     if host_element is None:
         raise ValueError("target down or scan unable to reach target")
