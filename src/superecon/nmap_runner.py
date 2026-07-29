@@ -2,7 +2,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from dataModel import Target, Port, Service
+from superecon.dataModel import Target, Port, Service
 
 
 class NmapExecutionError(Exception):

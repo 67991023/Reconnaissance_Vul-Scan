@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 
-from nmap_runner import parse_nmap_xml
+from superecon.nmap_runner import parse_nmap_xml
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "sample_nmap_output.xml"
