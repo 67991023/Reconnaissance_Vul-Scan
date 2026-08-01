@@ -1,45 +1,70 @@
 concurrency:
-  max_concurrent_plugins: 8
-  scan_timeout_seconds: 600
+  max_concurrent_plugins: 8     # รัน plugin พร้อมกันได้สูงสุดกี่ตัว
+  default_timeout_seconds: 600  # timeout เริ่มต้นถ้า plugin ไม่ได้ระบุเอง
 
+# ---------- Trigger Rules ----------
+# แต่ละ rule คือ 1 เงื่อนไข: "ถ้า port/service ตรงแบบนี้ ให้เรียก plugin เหล่านี้"
 triggers:
+
   - match:
       port: 80
-      service: "http|http-proxy"
+      service_contains: ["http"]
     plugins: ["http_plugin"]
+    requires_flag: null
 
   - match:
       port: 443
-      service: "https|ssl/http"
+      service_contains: ["https", "ssl/http"]
     plugins: ["http_plugin"]
-    extra_args:
-      scheme: "https"
+    requires_flag: null
 
   - match:
-      port: 445
-      service: "microsoft-ds|netbios-ssn"
-    plugins: ["smb_plugin"]
-
-  - match:
-      port: 21
-      service: "ftp"
-    plugins: ["ftp_plugin"]
+      port: 8080
+      service_contains: ["http"]
+    plugins: ["http_plugin"]
+    requires_flag: null
 
   - match:
       port: 22
-      service: "ssh"
+      service_contains: ["ssh"]
     plugins: ["ssh_plugin"]
+    requires_flag: null
+
+  - match:
+      port: 21
+      service_contains: ["ftp"]
+    plugins: ["ftp_plugin"]
+    requires_flag: null
+
+  - match:
+      port: 445
+      service_contains: ["microsoft-ds", "netbios-ssn"]
+    plugins: ["smb_plugin"]
+    requires_flag: null
+
+  - match:
+      port: 139
+      service_contains: ["netbios-ssn"]
+    plugins: ["smb_plugin"]
+    requires_flag: null
+
+  - match:
+      port: 135
+      service_contains: ["msrpc"]
+    plugins: ["rpc_plugin"]
+    requires_flag: null
 
   - match:
       port: 53
-      service: "domain"
+      service_contains: ["domain"]
     plugins: ["dns_plugin"]
+    requires_flag: null
 
   - match:
-      port: [139, 445]
-      service: "netbios"
-    plugins: ["smb_plugin"]
-
+      port: 161
+      service_contains: ["snmp"]
+    plugins: ["snmp_plugin"]
+    requires_flag: "allow_bruteforce" 
 fallback:
   # port ที่ไม่ match rule ไหนเลย → เก็บ banner ไว้เฉยๆ ไม่ trigger plugin
   action: "banner_grab_only"
