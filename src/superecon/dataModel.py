@@ -12,7 +12,7 @@ class Service: # ข้อมูล service ที่เจอบน 1 port เ�
 
     def full_banner(self) -> str: # รวม field ทั้งหมดเป็น string เดียว
         parts = [self.product, self.version, self.extra_info]
-        return " ".join(p for p in parts if p == True) or self.name
+        return " ".join(p for p in parts if p) or self.name
 
 
 @dataclass

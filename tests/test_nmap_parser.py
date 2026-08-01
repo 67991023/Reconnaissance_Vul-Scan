@@ -18,13 +18,18 @@ def test_parse_returns_correct_host(sample_xml):
     assert target.host == "10.10.10.99"
 
 
-def test_parse_only_includes_open_ports(sample_xml):
+def test_parse_includes_all_ports_with_correct_state(sample_xml):
+    """เปลี่ยนจากเดิม: ตอนนี้ parser เก็บทุก port ไว้ ไม่กรอง closed ออกแล้ว
+    ต้องเช็คว่า port ยังอยู่ครบ แต่ state ต้องถูกต้องแทน"""
     target = parse_nmap_xml(sample_xml)
     port_numbers = [p.number for p in target.ports]
 
     assert 22 in port_numbers
     assert 80 in port_numbers
-    assert 139 not in port_numbers
+    assert 139 in port_numbers   # เปลี่ยนจาก "not in" เป็น "in" — เก็บไว้แล้ว
+
+    closed_port = target.get_port(139)
+    assert closed_port.state == "closed"   # แต่ต้อง label ถูกต้องว่า closed
 
 
 def test_parse_extracts_service_details(sample_xml):
