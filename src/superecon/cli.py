@@ -1,37 +1,28 @@
 import argparse
 import sys
+import time
 from pathlib import Path
 
 from superecon.nmap_runner import NmapExecutionError, scan_target
 from superecon.trigger_engine import TriggerEngine
 from superecon.plugins.registry import registry
+from superecon.executor import run_plugins_concurrently, PluginTask
 
-# บรรทัดนี้สำคัญที่สุดในไฟล์ — ต้อง import ให้ decorator @register_plugin
-# ทำงาน ถ้าไม่ import ไฟล์นี้เลย registry จะไม่รู้จัก "http_plugin" เลย
-import superecon.http_plugin  # noqa: F401
-# ↑ # noqa: F401 คือ comment บอก linter (เช่น flake8) ว่า "รู้แล้วว่าไม่ได้
-#   ใช้ตัวแปรจาก import นี้ตรงๆ แต่ตั้งใจ import เพื่อ side-effect (register)"
-#   ไม่ใส่ก็ได้ แค่ป้องกัน warning เฉยๆ
+import superecon.plugins.http_plugin  
+import superecon.plugins.ftp_plugin   
+import superecon.plugins.ssh_plugin   
+import superecon.plugins.smb_plugin   
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="superecon", description="CLI recon automation tool")
+    parser = argparse.ArgumentParser(prog="superecon")
     parser.add_argument("-t", "--target", required=True)
     parser.add_argument("-p", "--ports", default="1-1000")
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--show-closed", action="store_true")
-    parser.add_argument(
-        "--enumerate",
-        action="store_true",
-        help="รัน trigger engine + plugin ต่อจาก port scan อัตโนมัติ",
-    )
-    parser.add_argument(
-        "--allow-bruteforce",
-        action="store_true",
-        dest="allow_bruteforce",
-        help="เปิดให้รัน trigger ที่เป็น brute-force (เช่น SNMP community brute)",
-    )
-    parser.add_argument("-o", "--output", default="./output", help="โฟลเดอร์เก็บผลลัพธ์")
+    parser.add_argument("--enumerate", action="store_true")
+    parser.add_argument("--allow-bruteforce", action="store_true", dest="allow_bruteforce")
+    parser.add_argument("-o", "--output", default="./output")
     return parser
 
 
@@ -64,38 +55,49 @@ def main():
         for port in other_ports:
             print(f"  {port.number}/{port.protocol}  [{port.state}]")
 
-    # ส่วนใหม่: Trigger Engine + Plugin
-    if args.enumerate:
-        print(f"\n[*] เริ่ม enumeration...")
+    if not args.enumerate:
+        return
 
-        enabled_flags = {"allow_bruteforce"} if args.allow_bruteforce else set()
-        engine = TriggerEngine(Path("config/default.yaml"), enabled_flags=enabled_flags)
-        matches = engine.resolve(open_ports)
+    print(f"\n[*] เริ่ม enumeration (concurrent)...")
+    start_time = time.time()   # ← เริ่มจับเวลา (ใช้เทียบ manual ทีหลัง)
 
-        if not matches:
-            print("[*] ไม่มี trigger ไหนตรงกับ port ที่เจอ")
-            return
+    enabled_flags = {"allow_bruteforce"} if args.allow_bruteforce else set()
+    engine = TriggerEngine(Path("config/default.yaml"), enabled_flags=enabled_flags)
+    matches = engine.resolve(open_ports)
 
-        for match in matches:
-            for plugin_name in match.plugin_names:
+    if not matches:
+        print("[*] ไม่มี trigger ไหนตรงกับ port ที่เจอ")
+        return
 
-                if not registry.has(plugin_name):
-                    print(f"  [skip] {plugin_name} ยังไม่ได้ implement (port {match.port.number})")
-                    continue
+    # ========== สร้าง "รายการใบสั่งงาน" ทั้งหมดก่อน (ยังไม่รันจริง) ==========
+    tasks: list[PluginTask] = []
+    for match in matches:
+        for plugin_name in match.plugin_names:
+            if not registry.has(plugin_name):
+                print(f"  [skip] {plugin_name} ยังไม่ได้ implement (port {match.port.number})")
+                continue
 
-                plugin_class = registry.get(plugin_name)
-                plugin_instance = plugin_class()
+            service_name = match.port.service.name if match.port.service else "unknown"
+            port_outdir = Path(args.output) / args.target / f"{match.port.number}_{service_name}"
+            tasks.append(PluginTask(
+                plugin_name=plugin_name,
+                target_host=args.target,
+                port=match.port,
+                output_dir=port_outdir,
+            ))
 
-                service_name = match.port.service.name if match.port.service else "unknown"
-                port_outdir = Path(args.output) / args.target / f"{match.port.number}_{service_name}"
+    print(f"[*] มอบหมาย {len(tasks)} งานให้ทีมพนักงาน (max 5 คนพร้อมกัน)...\n")
 
-                print(f"  [running] {plugin_name} on port {match.port.number}...")
-                result = plugin_instance.run(args.target, match.port, port_outdir)
+    # รันทุกงานพร้อมกันด้วย executor
+    results = run_plugins_concurrently(tasks, max_workers=5, timeout_seconds=120)
 
-                if not result.findings:
-                    print(f"    ไม่พบ finding ที่น่าสนใจ")
-                for finding in result.findings:
-                    print(f"    [{finding.severity}] {finding.title}")
+    for result in results:
+        print(f"[{result.plugin_name}] port {result.port} — {len(result.findings)} finding(s):")
+        for finding in result.findings:
+            print(f"  [{finding.severity}] {finding.title}")
+
+    elapsed = time.time() - start_time
+    print(f"\n[*] Enumeration เสร็จใน {elapsed:.1f} วินาที")
 
 
 if __name__ == "__main__":
