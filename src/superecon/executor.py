@@ -19,8 +19,8 @@ def _run_single_plugin(task: PluginTask) -> PluginResult:
 
 def run_plugins_concurrently(
     tasks: list[PluginTask],
-    max_workers: int = 5,
-    timeout_seconds: int = 120,
+    max_workers: int = 8,
+    timeout_seconds: int = 600,
 ) -> list[PluginResult]:
     results: list[PluginResult] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
