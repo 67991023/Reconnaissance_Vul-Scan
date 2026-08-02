@@ -11,15 +11,13 @@ Recon เป็นขั้นตอนที่ต้องทำซ้ำๆ �
 
 ## Installation
 
-\`\`\`bash
 git clone https://github.com/yourname/superecon
 cd superecon
 pip install -e .
-\`\`\`
 
 ## Usage
 
-\`\`\`bash
+bash
 # Scan พื้นฐาน
 superecon -t 10.10.10.5 -p 1-1000
 
