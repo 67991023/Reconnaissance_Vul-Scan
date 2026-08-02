@@ -23,7 +23,7 @@ def write_summary(
     for port in open_ports:
         service_name = port.service.name if port.service else "unknown"
         service_version = port.service.version if port.service else "unknown"
-        lines.append(f"| {port.portid} | {service_name} | {service_version} |")
+        lines.append(f"| {port.number} | {service_name} | {service_version} |")
     lines.append("")
 
     finding_by_severity = {"critical": [], "notable": [], "info": []}
