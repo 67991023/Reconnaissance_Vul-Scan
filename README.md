@@ -19,13 +19,13 @@ pip install -e .
 
 bash
 # Scan พื้นฐาน
-superecon -t 10.10.10.5 -p 1-1000
+superecon -t 127.0.0.1 -p 1-1000
 
 # Scan + auto-enumerate ตาม service ที่เจอ
-superecon -t 10.10.10.5 -p 1-1000 --enumerate
+superecon -t 127.0.0.1 -p 1-1000 --enumerate
 
 # เพิ่ม full port scan แบบ background คู่ขนาน
-superecon -t 10.10.10.5 -p 1-1000 --enumerate --full-scan
+superecon -t 127.0.0.1 -p 1-1000 --enumerate --full-scan
 \`\`\`
 
 ## Architecture
